@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #fcf9f8;
+  --foreground: #323232;
+  --muted: #7a7a7a;
+  --card: #ffffff;
+  --border: #ece7e4;
+  --brand: #605f5f;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.font-display {
+  font-family: 'Inter', sans-serif;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.fade-in-up.delay-2 {
+  animation-delay: 0.08s;
+}
+
+.fade-in-up.delay-3 {
+  animation-delay: 0.16s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dot-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dot-pulse span {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.4;
+  animation: pulseDot 1s infinite ease-in-out;
+}
+
+.dot-pulse span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dot-pulse span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
