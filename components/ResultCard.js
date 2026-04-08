@@ -1,5 +1,9 @@
 'use client';
 
+import { useRef } from 'react';
+import { toPng } from 'html-to-image';
+import ShareCard from './ShareCard';
+
 function toPercent(confidence) {
   const map = {
     high: 90,
@@ -26,6 +30,8 @@ function toPercent(confidence) {
 }
 
 export default function ResultCard({ result }) {
+  const shareCardRef = useRef(null);
+
   const lang = result?.language === 'mr' ? 'mr' : 'en';
   const safeConfidence = toPercent(result?.confidence);
 
@@ -60,92 +66,133 @@ export default function ResultCard({ result }) {
   const medicalWarning =
     result?.medical_warning || (result?.is_medical ? t.medicalFallback : '');
 
+  async function handleShareCardDownload() {
+    if (!shareCardRef.current) return;
+
+    try {
+      const dataUrl = await toPng(shareCardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+      });
+
+      const link = document.createElement('a');
+      link.download = 'factisizer-share-card.png';
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error('Failed to generate share card image:', error);
+      alert('Could not generate share image. Please try again.');
+    }
+  }
+
   return (
-    <div className="rounded-2xl border border-[#ece7e4] bg-white px-6 py-6 fade-in-up">
-      <div className="border-b border-[#ece7e4] pb-6">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
-          {t.claimChecked}
-        </p>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="inline-flex items-center rounded-full border border-[#ece7e4] bg-[#f7f4f2] px-4 py-2 text-[12px] font-medium text-[#7a7a7a]">
-            {t.claimType}
-          </span>
-
-          <span className="inline-flex items-center rounded-full border border-[#ece7e4] bg-[#f7f4f2] px-4 py-2 text-[12px] font-medium text-[#7a7a7a]">
-            {lang === 'mr' ? 'स्रोत' : 'Sources'}: {sources.length}
-          </span>
-        </div>
-      </div>
-
-      <div className="border-b border-[#ece7e4] py-6">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
-          {t.explanation}
-        </p>
-
-        <p className="mt-4 text-[15px] leading-8 text-[#4d4d4d]">
-          {result?.explanation || ''}
-        </p>
-      </div>
-
-      <div className="border-b border-[#ece7e4] py-6">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
-          {t.confidence}
-        </p>
-
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <p className="text-[15px] font-semibold text-[#323232]">
-            {safeConfidence}%
+    <>
+      <div className="rounded-2xl border border-[#ece7e4] bg-white px-6 py-6 fade-in-up">
+        <div className="border-b border-[#ece7e4] pb-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
+            {t.claimChecked}
           </p>
-          <p className="text-right text-sm text-[#9a948f]">
-            {t.confidenceHint}
-          </p>
-        </div>
 
-        <div className="mt-4 h-[10px] w-full overflow-hidden rounded-full bg-[#f0ebe8]">
-          <div
-            className="h-full rounded-full bg-[#c0392b] transition-all duration-300"
-            style={{ width: `${safeConfidence}%` }}
-          />
-        </div>
-      </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center rounded-full border border-[#ece7e4] bg-[#f7f4f2] px-4 py-2 text-[12px] font-medium text-[#7a7a7a]">
+                {t.claimType}
+              </span>
 
-      {medicalWarning && (
-        <div className="border-b border-[#ece7e4] py-6">
-          <div className="rounded-2xl border border-[#f1d36b] bg-[#fff4bf] px-5 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7a5a00]">
-              {t.medicalTitle}
-            </p>
+              <span className="inline-flex items-center rounded-full border border-[#ece7e4] bg-[#f7f4f2] px-4 py-2 text-[12px] font-medium text-[#7a7a7a]">
+                {lang === 'mr' ? 'स्रोत' : 'Sources'}: {sources.length}
+              </span>
+            </div>
 
-            <p className="mt-3 text-[14px] leading-7 text-[#5c4800]">
-              {medicalWarning}
-            </p>
+            {/* ✅ UPDATED BUTTON */}
+            <button
+              type="button"
+              onClick={handleShareCardDownload}
+              className="inline-flex items-center justify-center rounded-full bg-[#10b981] px-5 py-2 text-[14px] font-semibold text-white transition hover:bg-[#059669]"
+            >
+              Download to share
+            </button>
           </div>
         </div>
-      )}
 
-      <div className="pt-6">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
-          {t.sources}
-        </p>
-
-        {sources.length > 0 ? (
-          <ul className="mt-4 space-y-2">
-            {sources.map((source, index) => (
-              <li
-                key={`${source}-${index}`}
-                className="text-[14px] leading-7 text-[#6f6f6f]"
-              >
-                • {source}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-4 text-[14px] italic leading-7 text-[#9a948f]">
-            {t.noSources}
+        <div className="border-b border-[#ece7e4] py-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
+            {t.explanation}
           </p>
+
+          <p className="mt-4 text-[15px] leading-8 text-[#4d4d4d]">
+            {result?.explanation || ''}
+          </p>
+        </div>
+
+        <div className="border-b border-[#ece7e4] py-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
+            {t.confidence}
+          </p>
+
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <p className="text-[15px] font-semibold text-[#323232]">
+              {safeConfidence}%
+            </p>
+            <p className="text-right text-sm text-[#9a948f]">
+              {t.confidenceHint}
+            </p>
+          </div>
+
+          <div className="mt-4 h-[10px] w-full overflow-hidden rounded-full bg-[#f0ebe8]">
+            <div
+              className="h-full rounded-full bg-[#c0392b] transition-all duration-300"
+              style={{ width: `${safeConfidence}%` }}
+            />
+          </div>
+        </div>
+
+        {medicalWarning && (
+          <div className="border-b border-[#ece7e4] py-6">
+            <div className="rounded-2xl border border-[#f1d36b] bg-[#fff4bf] px-5 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7a5a00]">
+                {t.medicalTitle}
+              </p>
+
+              <p className="mt-3 text-[14px] leading-7 text-[#5c4800]">
+                {medicalWarning}
+              </p>
+            </div>
+          </div>
         )}
+
+        <div className="pt-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
+            {t.sources}
+          </p>
+
+          {sources.length > 0 ? (
+            <ul className="mt-4 space-y-2">
+              {sources.map((source, index) => (
+                <li
+                  key={`${source}-${index}`}
+                  className="text-[14px] leading-7 text-[#6f6f6f]"
+                >
+                  • {source}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-[14px] italic leading-7 text-[#9a948f]">
+              {t.noSources}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed left-[-9999px] top-0 opacity-0"
+      >
+        <div ref={shareCardRef}>
+          <ShareCard result={result} />
+        </div>
+      </div>
+    </>
   );
 }
