@@ -80,16 +80,6 @@ export default function ResultCard({ result }) {
 
       <div className="border-b border-[#ece7e4] py-6">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
-          {lang === 'mr' ? 'दावा' : 'Claim'}
-        </p>
-
-        <p className="mt-4 text-[15px] leading-8 text-[#323232]">
-          {result?.claim || ''}
-        </p>
-      </div>
-
-      <div className="border-b border-[#ece7e4] py-6">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b8b2ae]">
           {t.explanation}
         </p>
 
@@ -107,7 +97,7 @@ export default function ResultCard({ result }) {
           <p className="text-[15px] font-semibold text-[#323232]">
             {safeConfidence}%
           </p>
-          <p className="text-sm text-[#9a948f] text-right">
+          <p className="text-right text-sm text-[#9a948f]">
             {t.confidenceHint}
           </p>
         </div>

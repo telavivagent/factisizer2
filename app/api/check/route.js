@@ -14,7 +14,11 @@ function countWords(text) {
 function guessInputLanguage(text) {
   const value = String(text || '');
   const devaChars = (value.match(/[\u0900-\u097F]/g) || []).length;
-  return devaChars > 0 ? 'mr' : 'en';
+  const hebrewChars = (value.match(/[\u0590-\u05FF]/g) || []).length;
+
+  if (hebrewChars > 0) return 'he';
+  if (devaChars > 0) return 'mr';
+  return 'en';
 }
 
 function detectRequestedOutputLanguage(text) {
@@ -42,12 +46,26 @@ function detectRequestedOutputLanguage(text) {
     /इंग्लिशमध्ये/,
   ];
 
+  const hebrewPatterns = [
+    /\bin hebrew\b/i,
+    /\banswer in hebrew\b/i,
+    /\breply in hebrew\b/i,
+    /\brespond in hebrew\b/i,
+    /\bgive (?:me )?(?:the )?answer in hebrew\b/i,
+    /\bhebrew\b/i,
+    /בעברית/,
+  ];
+
   for (const pattern of marathiPatterns) {
     if (pattern.test(value)) return 'mr';
   }
 
   for (const pattern of englishPatterns) {
     if (pattern.test(value)) return 'en';
+  }
+
+  for (const pattern of hebrewPatterns) {
+    if (pattern.test(value)) return 'he';
   }
 
   return null;
@@ -74,6 +92,14 @@ function stripOutputLanguageInstruction(text) {
     /\s*[,;:\-–—]?\s*\bgive (?:me )?(?:the )?answer in english\b\s*$/i,
     /\s*[,;:\-–—]?\s*इंग्रजीत\s*$/i,
     /\s*[,;:\-–—]?\s*इंग्लिशमध्ये\s*$/i,
+
+    /\s*[,;:\-–—]?\s*\bin hebrew\b\s*$/i,
+    /\s*[,;:\-–—]?\s*\banswer in hebrew\b\s*$/i,
+    /\s*[,;:\-–—]?\s*\breply in hebrew\b\s*$/i,
+    /\s*[,;:\-–—]?\s*\brespond in hebrew\b\s*$/i,
+    /\s*[,;:\-–—]?\s*\bgive (?:me )?(?:the )?answer in hebrew\b\s*$/i,
+    /\s*[,;:\-–—]?\s*\bhebrew\b\s*$/i,
+    /\s*[,;:\-–—]?\s*בעברית\s*$/i,
   ];
 
   for (const pattern of patternsToRemove) {
@@ -84,11 +110,27 @@ function stripOutputLanguageInstruction(text) {
 }
 
 function normalizeLanguage(value, input, forcedLanguage) {
-  if (forcedLanguage === 'mr' || forcedLanguage === 'en') return forcedLanguage;
+  if (
+    forcedLanguage === 'mr' ||
+    forcedLanguage === 'en' ||
+    forcedLanguage === 'he'
+  ) {
+    return forcedLanguage;
+  }
 
   const raw = String(value || '').trim().toLowerCase();
-  if (raw === 'mr' || raw.includes('marathi') || raw.includes('मराठी')) return 'mr';
-  if (raw === 'en' || raw.includes('english')) return 'en';
+
+  if (raw === 'mr' || raw.includes('marathi') || raw.includes('मराठी')) {
+    return 'mr';
+  }
+
+  if (raw === 'he' || raw.includes('hebrew') || raw.includes('עברית')) {
+    return 'he';
+  }
+
+  if (raw === 'en' || raw.includes('english')) {
+    return 'en';
+  }
 
   return guessInputLanguage(input);
 }
@@ -99,10 +141,21 @@ function normalizeConfidence(value) {
   return 'medium';
 }
 
+function looksLikeUrl(text) {
+  const value = String(text || '').trim();
+  return /^https?:\/\/\S+$/i.test(value);
+}
+
+function isQuestionInput(text) {
+  const value = String(text || '').trim();
+  return value.endsWith('?');
+}
+
 function normalizeInputType(value, input) {
   const raw = String(value || '').trim().toLowerCase();
   if (raw === 'claim' || raw === 'question' || raw === 'url') return raw;
   if (looksLikeUrl(input)) return 'url';
+  if (isQuestionInput(input)) return 'question';
   return 'claim';
 }
 
@@ -123,6 +176,16 @@ function fallbackSources(verdict, language) {
     return ['विश्वसनीय पुरावे अपुरे', 'सार्वजनिक माहितीमध्ये स्पष्ट पुष्टी नाही'];
   }
 
+  if (language === 'he') {
+    if (verdict === 'TRUE') {
+      return ['מקורות ציבוריים אמינים', 'מידע כללי'];
+    }
+    if (verdict === 'FALSE') {
+      return ['בדיקת עובדות כללית', 'מידע ציבורי אמין'];
+    }
+    return ['אין מספיק ראיות', 'אין אישור ברור במקורות'];
+  }
+
   if (verdict === 'TRUE') {
     return ['Reliable public records', 'General reference sources'];
   }
@@ -132,22 +195,19 @@ function fallbackSources(verdict, language) {
   return ['Insufficient reliable evidence', 'No clear confirmation in public sources'];
 }
 
-function ensureSentencePunctuation(text) {
+function ensureSentencePunctuation(text, language = 'en') {
   const value = String(text || '').trim();
   if (!value) return '';
   if (/[.!?।]$/.test(value)) return value;
+  if (language === 'he') return `${value}.`;
   return `${value}.`;
 }
 
-function capitalizeFirst(text) {
+function capitalizeFirst(text, language = 'en') {
   const value = String(text || '').trim();
   if (!value) return '';
+  if (language === 'he') return value.replace(/\s+/g, ' ').trim();
   return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function looksLikeUrl(text) {
-  const value = String(text || '').trim();
-  return /^https?:\/\/\S+$/i.test(value);
 }
 
 function normalizeEnglishQuestionToClaim(input) {
@@ -167,7 +227,7 @@ function normalizeEnglishQuestionToClaim(input) {
   for (const pattern of copulaPatterns) {
     const match = clean.match(pattern.regex);
     if (match) {
-      return ensureSentencePunctuation(capitalizeFirst(pattern.build(match)));
+      return ensureSentencePunctuation(capitalizeFirst(pattern.build(match), 'en'), 'en');
     }
   }
 
@@ -188,11 +248,11 @@ function normalizeEnglishQuestionToClaim(input) {
   for (const pattern of auxiliaryPatterns) {
     const match = clean.match(pattern.regex);
     if (match) {
-      return ensureSentencePunctuation(capitalizeFirst(pattern.build(match)));
+      return ensureSentencePunctuation(capitalizeFirst(pattern.build(match), 'en'), 'en');
     }
   }
 
-  return ensureSentencePunctuation(capitalizeFirst(clean));
+  return ensureSentencePunctuation(capitalizeFirst(clean, 'en'), 'en');
 }
 
 function normalizeQuestionToClaim(input, language) {
@@ -200,7 +260,11 @@ function normalizeQuestionToClaim(input, language) {
   if (!text) return '';
 
   if (language === 'mr') {
-    return ensureSentencePunctuation(text.replace(/\?+$/, '').trim());
+    return ensureSentencePunctuation(text.replace(/\?+$/, '').trim(), 'mr');
+  }
+
+  if (language === 'he') {
+    return ensureSentencePunctuation(text.replace(/\?+$/, '').trim().replace(/\s+/g, ' '), 'he');
   }
 
   return normalizeEnglishQuestionToClaim(text);
@@ -287,7 +351,7 @@ async function fetchUrlHtml(url) {
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
         Accept:
           'text/html,application/xhtml+xml,application/xml;q=0.9,text/plain;q=0.8,*/*;q=0.7',
-        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Language': 'en-US,en;q=0.9,he;q=0.8,mr;q=0.7',
       },
       cache: 'no-store',
     });
@@ -324,7 +388,12 @@ async function rewriteExplanationStrict({
   explanation,
   language,
 }) {
-  const targetLanguage = language === 'mr' ? 'Marathi' : 'English';
+  const targetLanguage =
+    language === 'mr'
+      ? 'Marathi'
+      : language === 'he'
+        ? 'Hebrew'
+        : 'English';
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -397,11 +466,14 @@ export async function POST(req) {
       forcedOutputLanguage ||
       (urlContext?.text ? guessInputLanguage(urlContext.text) : guessInputLanguage(cleanedInput));
 
-    const targetLanguageName = detectedInputLanguage === 'mr' ? 'Marathi' : 'English';
+    const targetLanguageName =
+      detectedInputLanguage === 'mr'
+        ? 'Marathi'
+        : detectedInputLanguage === 'he'
+          ? 'Hebrew'
+          : 'English';
 
-    const effectiveFactInput = isUrlInput
-      ? cleanedInput
-      : cleanedInput;
+    const effectiveFactInput = cleanedInput;
 
     const articleContextBlock =
       isUrlInput && urlContext
@@ -426,10 +498,11 @@ ${urlContext.text}
 You are a strict fact-checking AI.
 
 LANGUAGE RULES:
-- Detect whether the user's text is English or Marathi.
+- Detect whether the user's text is English, Marathi, or Hebrew.
 - Also detect whether the user explicitly requested the answer language.
 - If the user asks for the answer in Marathi, the ENTIRE output MUST be in Marathi.
 - If the user asks for the answer in English, the ENTIRE output MUST be in English.
+- If the user asks for the answer in Hebrew, the ENTIRE output MUST be in Hebrew.
 - Otherwise, use the natural language of the input or article.
 - Do not mix languages.
 - The required output language for this request is ${targetLanguageName}.
@@ -533,30 +606,40 @@ Return JSON exactly in this shape:
 
     let claim = String(data.claim || '').trim();
 
-    if (normalizedInputType === 'question') {
+    if (normalizedInputType === 'question' || isQuestionInput(cleanedInput)) {
       const fallbackClaim = normalizeQuestionToClaim(cleanedInput, normalizedLanguage);
       const claimLooksBad =
         !claim ||
         /\?$/.test(claim) ||
         /\bin marathi\b/i.test(claim) ||
         /\bin english\b/i.test(claim) ||
+        /\bin hebrew\b/i.test(claim) ||
         /मराठीत/.test(claim) ||
-        /इंग्रजीत/.test(claim);
+        /इंग्रजीत/.test(claim) ||
+        /בעברית/.test(claim);
 
       if (claimLooksBad) {
         claim = fallbackClaim;
       } else {
-        claim = ensureSentencePunctuation(capitalizeFirst(claim));
+        claim = ensureSentencePunctuation(
+          capitalizeFirst(claim, normalizedLanguage),
+          normalizedLanguage
+        );
       }
     } else {
-      claim = ensureSentencePunctuation(capitalizeFirst(claim || cleanedInput));
+      claim = ensureSentencePunctuation(
+        capitalizeFirst(claim || cleanedInput, normalizedLanguage),
+        normalizedLanguage
+      );
     }
 
     if (normalizedInputType === 'url' && (!claim || /article.*accurate/i.test(claim))) {
       claim =
         normalizedLanguage === 'mr'
           ? 'दिलेल्या लेखातील मुख्य दावा पडताळण्यात आला.'
-          : 'The main factual claim in the provided article was checked.';
+          : normalizedLanguage === 'he'
+            ? 'הטענה המרכזית במאמר נבדקה לצורך בדיקת עובדות.'
+            : 'The main factual claim in the provided article was checked.';
     }
 
     let explanation = String(data.explanation || '').trim();
@@ -584,7 +667,9 @@ Return JSON exactly in this shape:
       const domainLabel =
         normalizedLanguage === 'mr'
           ? `मूळ लेख: ${sourceDomain}`
-          : `Source article: ${sourceDomain}`;
+          : normalizedLanguage === 'he'
+            ? `כתבת מקור: ${sourceDomain}`
+            : `Source article: ${sourceDomain}`;
       sources = [domainLabel, ...sources].filter(Boolean);
     }
 
@@ -613,7 +698,9 @@ Return JSON exactly in this shape:
       normalizedResult.medical_warning =
         normalizedLanguage === 'mr'
           ? 'आरोग्यविषयक प्रश्नांसाठी कृपया पात्र वैद्यकीय तज्ज्ञांचा सल्ला घ्या. फक्त AI उत्तरावर अवलंबून राहू नका.'
-          : 'For health-related questions, please consult a qualified medical professional. Do not rely only on AI output.';
+          : normalizedLanguage === 'he'
+            ? 'בשאלות בריאותיות יש להתייעץ עם איש מקצוע רפואי מוסמך. אין להסתמך רק על תשובת AI.'
+            : 'For health-related questions, please consult a qualified medical professional. Do not rely only on AI output.';
     }
 
     if (isUrlInput && !urlContext) {
@@ -621,11 +708,15 @@ Return JSON exactly in this shape:
       normalizedResult.claim =
         normalizedLanguage === 'mr'
           ? 'दिलेल्या दुव्यातील मजकूर विश्वसनीयरीत्या वाचता आला नाही.'
-          : 'The content at the provided URL could not be reliably read.';
+          : normalizedLanguage === 'he'
+            ? 'לא ניתן היה לקרוא באופן מהימן את התוכן שבקישור שסופק.'
+            : 'The content at the provided URL could not be reliably read.';
       normalizedResult.explanation =
         normalizedLanguage === 'mr'
           ? 'दिलेला दुवा ओळखला गेला, पण त्या पानातील लेखाचा पुरेसा मजकूर सुरक्षितपणे काढता आला नाही. त्यामुळे लेखातील मुख्य दावा अचूकपणे ओळखून त्याची तथ्य पडताळणी करणे शक्य झाले नाही. हे अनेकदा वेबसाइट रचना, स्क्रिप्ट-आधारित सामग्री, संरक्षण मर्यादा, किंवा अपुरी मजकूर उपलब्धता यामुळे होते. म्हणून हा निकाल सध्या UNVERIFIABLE ठेवला आहे. विश्वसनीय निकालासाठी कृपया लेखातील मुख्य परिच्छेद, स्क्रीनशॉट, किंवा संपूर्ण मजकूर थेट पेस्ट करा. तेव्हा अॅप विशिष्ट दावा काढून त्यावर TRUE, FALSE किंवा UNVERIFIABLE असा अधिक योग्य निर्णय देऊ शकेल.'
-          : 'The link was recognized, but the app could not reliably extract enough article text from that page to identify the main claim and fact-check it properly. This can happen because of site structure, script-heavy pages, access protections, or insufficient readable content in the fetched response. For that reason, the result is currently marked UNVERIFIABLE. To get a dependable verdict, please paste the key paragraph, a screenshot, or the article text directly. Then the app can extract a specific claim from the content itself and judge it more accurately as TRUE, FALSE, or UNVERIFIABLE.';
+          : normalizedLanguage === 'he'
+            ? 'הקישור זוהה, אך האפליקציה לא הצליחה לחלץ באופן מהימן מספיק טקסט מהמאמר כדי לזהות את הטענה המרכזית ולבדוק אותה כראוי. זה עלול לקרות בגלל מבנה האתר, תוכן המבוסס על סקריפטים, הגנות גישה, או חוסר בטקסט קריא מספיק בתגובה שנמשכה. לכן התוצאה מסומנת כרגע כ־UNVERIFIABLE. כדי לקבל הכרעה אמינה יותר, אפשר להדביק כאן את הפסקה המרכזית, צילום מסך, או את תוכן הכתבה עצמו. אז ניתן יהיה לחלץ טענה ספציפית ולסווג אותה בצורה מדויקת יותר כ־TRUE, FALSE או UNVERIFIABLE.'
+            : 'The link was recognized, but the app could not reliably extract enough article text from that page to identify the main claim and fact-check it properly. This can happen because of site structure, script-heavy pages, access protections, or insufficient readable content in the fetched response. For that reason, the result is currently marked UNVERIFIABLE. To get a dependable verdict, please paste the key paragraph, a screenshot, or the article text directly. Then the app can extract a specific claim from the content itself and judge it more accurately as TRUE, FALSE, or UNVERIFIABLE.';
       normalizedResult.confidence = 'low';
       normalizedResult.input_type = 'url';
       normalizedResult.sources = fallbackSources('UNVERIFIABLE', normalizedLanguage);

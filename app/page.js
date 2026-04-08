@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import VerdictCard from '@/components/VerdictCard';
 import ResultCard from '@/components/ResultCard';
@@ -14,6 +14,7 @@ const T = {
     btnClear: 'Clear',
     btnCheck: 'Check Fact',
     btnChecking: 'Checking…',
+    placeholder: 'Enter claim or question...',
     sectionLabel: 'Verdict',
     analysisBy: 'AI analysis',
     disclaimer:
@@ -22,13 +23,15 @@ const T = {
     errorMessage: 'Unable to check this claim right now. Please try again.',
     footNote: 'factisizer.com',
     adLabel: 'Advertisement',
+    adAria: 'Advertisement slot',
   },
   mr: {
     title: 'Factisizer',
-    tagline: 'झटकेपट खऱ्या खोट्याचा उलगडा',
+    tagline: 'झटपट तथ्य तपासा.',
     btnClear: 'खोडा',
     btnCheck: 'तपासा',
     btnChecking: 'तपासत आहे…',
+    placeholder: 'दावा किंवा प्रश्न लिहा...',
     sectionLabel: 'निकाल',
     analysisBy: 'AI विश्लेषण',
     disclaimer:
@@ -36,13 +39,40 @@ const T = {
     errorTitle: 'काहीतरी चुकले',
     errorMessage: 'हा दावा आत्ता तपासता आला नाही. कृपया पुन्हा प्रयत्न करा.',
     footNote: 'factisizer.com',
-    adLabel: 'Advertisement',
+    adLabel: 'जाहिरात',
+    adAria: 'जाहिरात जागा',
+  },
+  he: {
+    title: 'Factisizer',
+    tagline: 'בדיקת עובדות מיידית.',
+    btnClear: 'נקה',
+    btnCheck: 'בדוק עובדה',
+    btnChecking: 'בודק…',
+    placeholder: 'הזן טענה או שאלה...',
+    sectionLabel: 'פסק דין',
+    analysisBy: 'ניתוח AI',
+    disclaimer:
+      'בדיקות העובדות שנוצרות על ידי AI עלולות להיות לעיתים חלקיות, לא מעודכנות או שגויות. חשוב לאמת טענות משמעותיות מול מקורות ראשוניים אמינים, במיוחד בנושאי בריאות, חוק, כספים, בטיחות או החלטות דחופות.',
+    errorTitle: 'משהו השתבש',
+    errorMessage: 'לא ניתן לבדוק את הטענה הזאת כרגע. נסה שוב.',
+    footNote: 'factisizer.com',
+    adLabel: 'פרסומת',
+    adAria: 'שטח פרסומת',
   },
 };
 
 function guessLang(str) {
-  const deva = (str.match(/[\u0900-\u097F]/g) || []).length;
-  return deva / Math.max(str.length, 1) > 0.2 ? 'mr' : 'en';
+  const value = String(str || '');
+  const devaChars = (value.match(/[\u0900-\u097F]/g) || []).length;
+  const hebrewChars = (value.match(/[\u0590-\u05FF]/g) || []).length;
+
+  if (hebrewChars > 0) return 'he';
+  if (devaChars > 0) return 'mr';
+  return 'en';
+}
+
+function getDirection(lang) {
+  return lang === 'he' ? 'rtl' : 'ltr';
 }
 
 export default function Home() {
@@ -55,7 +85,16 @@ export default function Home() {
   const textareaRef = useRef(null);
   const resultsRef = useRef(null);
 
-  const t = T[uiLang];
+  const activeLang = useMemo(() => {
+    if (result?.language === 'mr' || result?.language === 'he' || result?.language === 'en') {
+      return result.language;
+    }
+    return uiLang;
+  }, [result?.language, uiLang]);
+
+  const dir = getDirection(activeLang);
+  const inputDir = getDirection(uiLang);
+  const t = T[activeLang] || T.en;
 
   const handleClear = useCallback(() => {
     setInput('');
@@ -88,14 +127,22 @@ export default function Home() {
       }
 
       setResult(data);
-      setUiLang(data.language === 'mr' ? 'mr' : 'en');
+
+      if (data.language === 'mr' || data.language === 'he' || data.language === 'en') {
+        setUiLang(data.language);
+      } else {
+        setUiLang(guessLang(trimmed));
+      }
+
       setStatus('success');
 
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 120);
     } catch (err) {
-      setErrorMsg(T[guessLang(trimmed)].errorMessage);
+      const fallbackLang = guessLang(trimmed);
+      setUiLang(fallbackLang);
+      setErrorMsg((T[fallbackLang] || T.en).errorMessage);
       setStatus('error');
     }
   }, [input, status]);
@@ -104,9 +151,9 @@ export default function Home() {
   const hasResult = status === 'success' && result;
 
   return (
-    <div className="min-h-dvh bg-[#fcf9f8]">
+    <div className="min-h-dvh bg-[#fcf9f8]" dir={dir}>
       <div className="mx-auto w-full max-w-xl px-4 pb-6 pt-2">
-        <header className="text-center pt-[12px]">
+        <header className="pt-[12px] text-center">
           <div className="relative mx-auto h-[40px] w-full max-w-[115px]">
             <Image
               src="/header.png"
@@ -125,13 +172,18 @@ export default function Home() {
         <textarea
           ref={textareaRef}
           value={input}
+          dir={inputDir}
           onChange={(e) => {
-            setInput(e.target.value);
-            if (e.target.value.trim()) {
-              setUiLang(guessLang(e.target.value));
+            const nextValue = e.target.value;
+            setInput(nextValue);
+
+            if (nextValue.trim()) {
+              setUiLang(guessLang(nextValue));
+            } else {
+              setUiLang('en');
             }
           }}
-          placeholder={uiLang === 'mr' ? 'दावा किंवा प्रश्न लिहा...' : 'Enter claim or question...'}
+          placeholder={(T[uiLang] || T.en).placeholder}
           rows={4}
           className="mt-4 w-full rounded-xl border border-[#e4dfdb] bg-white px-4 py-3 text-[16px] text-[#323232] outline-none placeholder:text-[#a8a19b]"
         />
@@ -155,10 +207,10 @@ export default function Home() {
         </div>
 
         <div ref={resultsRef} className="mt-6 space-y-4">
-          {isLoading && <LoadingState language={uiLang} />}
+          {isLoading && <LoadingState language={activeLang} />}
 
           {status === 'error' && (
-            <div className="rounded-2xl border border-[#f0d0cb] bg-[#fff5f4] px-5 py-4">
+            <div className="rounded-2xl border border-[#f0d0cb] bg-[#fff5f4] px-5 py-4" dir={dir}>
               <p className="text-sm font-semibold text-[#b33a2b]">
                 {t.errorTitle}
               </p>
@@ -169,12 +221,13 @@ export default function Home() {
           )}
 
           {hasResult && (
-            <>
+            <div dir={dir} className="space-y-4">
               <VerdictCard
                 verdict={result.verdict}
                 confidence={result.confidence}
-                language={uiLang}
+                language={activeLang}
                 inputType={result.input_type}
+                claim={result.claim}
               />
 
               <ResultCard result={result} />
@@ -182,13 +235,13 @@ export default function Home() {
               <div className="text-sm leading-7 text-[#6f6f6f]">
                 {t.disclaimer}
               </div>
-            </>
+            </div>
           )}
 
-          {status === 'idle' && <EmptyVerdict language={uiLang} />}
+          {status === 'idle' && <EmptyVerdict language={activeLang} />}
         </div>
 
-        <footer className="mt-6">
+        <footer className="mt-6" dir={dir}>
           <p className="text-center text-xs text-gray-400">
             {t.footNote}
           </p>
@@ -196,7 +249,7 @@ export default function Home() {
           <div
             className="mt-4 flex min-h-[90px] w-full items-center justify-center rounded-2xl border border-dashed border-[#ddd8d4] bg-[#f5f2f0]"
             role="complementary"
-            aria-label={uiLang === 'mr' ? 'जाहिरात जागा' : 'Advertisement slot'}
+            aria-label={t.adAria}
           >
             <p className="select-none text-xs font-medium uppercase tracking-wider text-[#c0bab5]">
               {t.adLabel}
