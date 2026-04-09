@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import VerdictCard from '@/components/VerdictCard';
 import ResultCard from '@/components/ResultCard';
 import EmptyVerdict from '@/components/EmptyVerdict';
@@ -22,6 +23,7 @@ const T = {
     errorTitle: 'Something went wrong',
     errorMessage: 'Unable to check this claim right now. Please try again.',
     footNote: 'factisizer.com',
+    privacyPolicy: 'Privacy Policy',
     adLabel: 'Advertisement',
     adAria: 'Advertisement slot',
   },
@@ -39,6 +41,7 @@ const T = {
     errorTitle: 'काहीतरी चुकले',
     errorMessage: 'हा दावा आत्ता तपासता आला नाही. कृपया पुन्हा प्रयत्न करा.',
     footNote: 'factisizer.com',
+    privacyPolicy: 'गोपनीयता धोरण',
     adLabel: 'जाहिरात',
     adAria: 'जाहिरातीची जागा डॉलर छापायला',
   },
@@ -56,6 +59,7 @@ const T = {
     errorTitle: 'משהו השתבש',
     errorMessage: 'לא ניתן לבדוק את הטענה הזאת כרגע. נסה שוב.',
     footNote: 'factisizer.com',
+    privacyPolicy: 'מדיניות פרטיות',
     adLabel: 'פרסומת',
     adAria: 'שטח פרסומת',
   },
@@ -242,9 +246,15 @@ export default function Home() {
         </div>
 
         <footer className="mt-6" dir={dir}>
-          <p className="text-center text-xs text-gray-400">
-            {t.footNote}
-          </p>
+          <div className="text-center text-xs text-gray-400">
+            <p>{t.footNote}</p>
+            <Link
+              href="/privacy-policy"
+              className="mt-2 inline-block underline underline-offset-2"
+            >
+              {t.privacyPolicy}
+            </Link>
+          </div>
 
           <div
             className="mt-4 flex min-h-[90px] w-full items-center justify-center rounded-2xl border border-dashed border-[#ddd8d4] bg-[#f5f2f0]"
