@@ -28,7 +28,7 @@ function verdictConfig(verdict) {
   }
 
   return {
-    bg: 'from-[#b45309] via-[#d97706] to-[#f59e0b]',
+    bg: 'from-[#1d4ed8] via-[#2563eb] to-[#60a5fa]',
     label: { en: 'UNVERIFIABLE', mr: 'अनिश्चित', he: 'לא ניתן לאימות' },
     sub: {
       en: 'Insufficient evidence',
@@ -68,8 +68,8 @@ export default function ShareCard({ result }) {
     result?.language === 'mr'
       ? 'mr'
       : result?.language === 'he'
-      ? 'he'
-      : 'en';
+        ? 'he'
+        : 'en';
 
   const dir = getDirection(lang);
   const verdict = String(result?.verdict || 'UNVERIFIABLE').toUpperCase();
@@ -85,40 +85,43 @@ export default function ShareCard({ result }) {
       claim: 'CLAIM',
       explanation: 'EXPLANATION',
       confidence: 'Confidence',
+      sources: 'SOURCES',
       legalTitle: 'LEGAL NOTICE',
       legalDisclaimer:
-        'This result is for informational use only. It is an AI-generated fact-check summary and should not be treated as legal, professional, or official advice.',
+        'This is an AI-generated fact-check summary for informational use only. Verify important claims with trusted reporting and official records.',
       medicalTitle: 'MEDICAL NOTICE',
       medicalFallback:
-        'This topic may involve health or medical information. Please do not rely only on AI output for diagnosis, treatment, or urgent decisions. Consult a qualified medical professional.',
+        'This topic may involve health information. Please consult a qualified medical professional instead of relying only on AI output.',
       footnote: 'factisizer.com',
     },
     mr: {
-      tagline: 'तथ्ये झटपट तपासा.',
+      tagline: 'झटपट तथ्य तपासा.',
       verdict: 'निकाल',
       claim: 'दावा',
       explanation: 'स्पष्टीकरण',
       confidence: 'आत्मविश्वास',
+      sources: 'स्रोत',
       legalTitle: 'कायदेशीर सूचना',
       legalDisclaimer:
-        'हा निकाल केवळ माहितीसाठी आहे. हा AI-निर्मित तथ्य-पडताळणी सारांश आहे. याला कायदेशीर, व्यावसायिक किंवा अधिकृत सल्ला समजू नये.',
+        'हा AI-निर्मित तथ्य-पडताळणी सारांश केवळ माहितीसाठी आहे. महत्त्वाच्या दाव्यांसाठी विश्वासार्ह वार्तांकन आणि अधिकृत नोंदी तपासा.',
       medicalTitle: 'वैद्यकीय सूचना',
       medicalFallback:
-        'हा विषय आरोग्य किंवा वैद्यकीय माहितीसंबंधी असू शकतो. निदान, उपचार किंवा तातडीचे निर्णय घेण्यासाठी फक्त AI वर अवलंबून राहू नका. पात्र वैद्यकीय तज्ज्ञांचा सल्ला घ्या.',
+        'हा विषय आरोग्यसंबंधी असू शकतो. फक्त AI उत्तरावर अवलंबून न राहता पात्र वैद्यकीय तज्ज्ञांचा सल्ला घ्या.',
       footnote: 'factisizer.com',
     },
     he: {
-      tagline: 'בדקו עובדות מיד.',
+      tagline: 'בדיקת עובדות מיידית.',
       verdict: 'פסק דין',
       claim: 'טענה',
       explanation: 'הסבר',
       confidence: 'רמת ביטחון',
+      sources: 'מקורות',
       legalTitle: 'הודעה משפטית',
       legalDisclaimer:
-        'התוצאה הזו מיועדת למידע כללי בלבד. זהו סיכום בדיקת עובדות שנוצר על ידי AI ואין לראות בו ייעוץ משפטי, מקצועי או רשמי.',
+        'זהו סיכום בדיקת עובדות שנוצר על ידי AI לצורכי מידע בלבד. טענות חשובות כדאי לאמת מול דיווחי מקור ורשומות רשמיות.',
       medicalTitle: 'הודעה רפואית',
       medicalFallback:
-        'נושא זה עשוי לכלול מידע רפואי או בריאותי. אין להסתמך רק על פלט ה-AI לצורך אבחון, טיפול או החלטות דחופות. יש לפנות לאיש מקצוע רפואי מוסמך.',
+        'נושא זה עשוי לכלול מידע בריאותי. יש להתייעץ עם איש מקצוע רפואי מוסמך במקום להסתמך רק על פלט AI.',
       footnote: 'factisizer.com',
     },
   }[lang];
@@ -126,12 +129,13 @@ export default function ShareCard({ result }) {
   const medicalWarning =
     result?.medical_warning || (result?.is_medical ? t.medicalFallback : '');
 
+  const sources = Array.isArray(result?.sources) ? result.sources.slice(0, 3) : [];
+
   return (
     <div
       dir={dir}
       className={`flex h-[1280px] w-[720px] flex-col overflow-hidden rounded-[48px] bg-gradient-to-b ${config.bg} px-10 pb-8 pt-8 text-white`}
     >
-      {/* Header */}
       <div className="-mx-10 -mt-8 bg-white px-10 pb-4 pt-8">
         <img
           src="/header.png"
@@ -144,7 +148,6 @@ export default function ShareCard({ result }) {
         </p>
       </div>
 
-      {/* Top content */}
       <div className="pt-5">
         <p className="text-[14px] font-bold uppercase tracking-[0.2em] text-white/80">
           {t.verdict}
@@ -166,50 +169,60 @@ export default function ShareCard({ result }) {
           <p className="text-[14px] font-bold uppercase tracking-[0.16em] text-white/85">
             {t.claim}
           </p>
-          <p className="mt-2 text-[24px] font-bold leading-[1.25] text-black">
+          <p className={`mt-2 text-[24px] font-bold leading-[1.25] text-black ${lang === 'he' ? 'text-right' : ''}`}>
             {claim}
           </p>
         </div>
       </div>
 
-      {/* Flexible middle section */}
       <div className="mt-4 flex min-h-0 flex-1 flex-col">
-        {/* Explanation gets all remaining space */}
         <div className="min-h-0 flex-1 rounded-[24px] bg-white px-5 py-5 text-black">
           <p className="text-[15px] font-bold uppercase tracking-[0.16em] text-[#8f8f8f]">
             {t.explanation}
           </p>
 
           <div className="mt-3 h-full overflow-hidden">
-            <p className="text-[20px] leading-[1.42] text-[#222222]">
+            <p className={`text-[20px] leading-[1.42] text-[#222222] ${lang === 'he' ? 'text-right' : ''}`}>
               {explanation}
             </p>
           </div>
         </div>
 
-        {/* Medical disclaimer only if needed */}
+        {sources.length > 0 && (
+          <div className="mt-4 rounded-[22px] bg-white/12 px-5 py-4">
+            <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-white/92">
+              {t.sources}
+            </p>
+            <div className="mt-2 space-y-1.5">
+              {sources.map((source, index) => (
+                <p key={`${source}-${index}`} className={`text-[18px] leading-[1.3] text-white/95 ${lang === 'he' ? 'text-right' : ''}`}>
+                  {index + 1}. {source}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
         {medicalWarning && (
-          <div className="mt-4 h-[118px] rounded-[22px] bg-[#fff4bf] px-5 py-4 text-[#5c4800]">
+          <div className="mt-4 rounded-[22px] bg-[#fff4bf] px-5 py-4 text-[#5c4800]">
             <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#7a5a00]">
               {t.medicalTitle}
             </p>
-            <p className="mt-2 line-clamp-3 text-[18px] leading-[1.35] text-[#5c4800]">
+            <p className={`mt-2 text-[18px] leading-[1.35] text-[#5c4800] ${lang === 'he' ? 'text-right' : ''}`}>
               {medicalWarning}
             </p>
           </div>
         )}
 
-        {/* Permanent legal placeholder block */}
-        <div className="mt-4 h-[118px] rounded-[22px] bg-white/12 px-5 py-4">
+        <div className="mt-4 rounded-[22px] bg-white/12 px-5 py-4">
           <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-white/92">
             {t.legalTitle}
           </p>
-          <p className="mt-2 line-clamp-3 text-[18px] leading-[1.35] text-white/95">
+          <p className={`mt-2 text-[18px] leading-[1.35] text-white/95 ${lang === 'he' ? 'text-right' : ''}`}>
             {t.legalDisclaimer}
           </p>
         </div>
 
-        {/* Footnote */}
         <div className="pt-4 text-center">
           <p className="text-[22px] font-semibold tracking-[0.06em] text-white/98">
             {t.footnote}
