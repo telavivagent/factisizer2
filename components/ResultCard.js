@@ -76,7 +76,11 @@ export default function ResultCard({ result }) {
       });
 
       const link = document.createElement('a');
-      link.download = 'factisizer-share-card.png';
+      const date = new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace(/[:T]/g, '-');
+      link.download = `factisizer-${date}.png`;
       link.href = dataUrl;
       link.click();
     } catch (error) {
@@ -104,7 +108,6 @@ export default function ResultCard({ result }) {
               </span>
             </div>
 
-            {/* ✅ UPDATED BUTTON */}
             <button
               type="button"
               onClick={handleShareCardDownload}

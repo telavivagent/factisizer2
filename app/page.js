@@ -14,7 +14,7 @@ const T = {
     btnClear: 'Clear',
     btnCheck: 'Check Fact',
     btnChecking: 'Checking…',
-    placeholder: 'Enter claim or question...',
+    placeholder: 'Enter claim or question or paste a link...',
     sectionLabel: 'Verdict',
     analysisBy: 'AI analysis',
     disclaimer:
@@ -27,11 +27,11 @@ const T = {
   },
   mr: {
     title: 'Factisizer',
-    tagline: 'झटपट तथ्य तपासा.',
+    tagline: 'झटकेपट खऱ्या खोट्याचा पडताळा',
     btnClear: 'खोडा',
     btnCheck: 'तपासा',
     btnChecking: 'तपासत आहे…',
-    placeholder: 'दावा किंवा प्रश्न लिहा...',
+    placeholder: 'वाक्य किंवा प्रश्न लिहा किंवा लिंक पेस्ट करा...',
     sectionLabel: 'निकाल',
     analysisBy: 'AI विश्लेषण',
     disclaimer:
@@ -40,7 +40,7 @@ const T = {
     errorMessage: 'हा दावा आत्ता तपासता आला नाही. कृपया पुन्हा प्रयत्न करा.',
     footNote: 'factisizer.com',
     adLabel: 'जाहिरात',
-    adAria: 'जाहिरात जागा',
+    adAria: 'जाहिरातीची जागा डॉलर छापायला',
   },
   he: {
     title: 'Factisizer',
@@ -48,7 +48,7 @@ const T = {
     btnClear: 'נקה',
     btnCheck: 'בדוק עובדה',
     btnChecking: 'בודק…',
-    placeholder: 'הזן טענה או שאלה...',
+    placeholder: 'הזן לינק טענה או שאלה...',
     sectionLabel: 'פסק דין',
     analysisBy: 'ניתוח AI',
     disclaimer:
