@@ -4,7 +4,7 @@ import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 export const metadata = {
   title: 'Factisizer — Check Facts Instantly',
   description:
-    'A minimal, premium AI-powered fact-checking app. Type a claim, ask a question, or paste an article URL.',
+    'A minimal, premium A judge in your pocket. Type a claim, ask a question, or paste an article URL.',
   metadataBase: new URL('https://factisizer.com'),
   applicationName: 'Factisizer',
   keywords: ['fact check', 'AI', 'misinformation', 'truth', 'Marathi'],

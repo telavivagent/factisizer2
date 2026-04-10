@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.factisizer.twa",
+      "sha256_cert_fingerprints": [
+        "48:07:43:58:A2:4D:CA:7B:D8:18:90:7A:41:A0:54:57:3C:3D:F9:D0:98:19:D9:C4:32:07:19:24:40:25:86:C5"
+      ]
+    }
+  }
+]
