@@ -4,14 +4,37 @@ import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 export const metadata = {
   title: 'Factisizer — Check Facts Instantly',
   description:
-    'A minimal, premium A judge in your pocket. Type a claim, ask a question, or paste an article URL.',
-  metadataBase: new URL('https://factisizer.com'),
+    'A judge in your pocket. Type a claim, ask a question, or paste an article URL.',
+  metadataBase: new URL('https://www.factisizer.com'),
   applicationName: 'Factisizer',
   keywords: ['fact check', 'AI', 'misinformation', 'truth', 'Marathi'],
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Factisizer',
+  },
+  openGraph: {
+    title: 'Factisizer — Check Facts Instantly',
+    description:
+      'A judge in your pocket. Type a claim, ask a question, or paste an article URL.',
+    url: 'https://www.factisizer.com',
+    siteName: 'Factisizer',
+    images: [
+      {
+        url: '/icon-512.png',
+        width: 512,
+        height: 512,
+        alt: 'Factisizer',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Factisizer — Check Facts Instantly',
+    description:
+      'A judge in your pocket. Type a claim, ask a question, or paste an article URL.',
+    images: ['/icon-512.png'],
   },
   formatDetection: { telephone: false },
 };
